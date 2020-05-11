@@ -134,6 +134,8 @@ export class CameraControls extends EventDispatcher {
 	// collisionTest uses nearPlane. ( PerspectiveCamera only )
 	protected _nearPlaneCorners: _THREE.Vector3[];
 
+	protected _deadzones: {min: _THREE.Vector2, max: _THREE.Vector2}[];
+
 	protected _boundary: _THREE.Box3;
 	protected _boundaryEnclosesCamera = false;
 
@@ -173,6 +175,8 @@ export class CameraControls extends EventDispatcher {
 			new THREE.Vector3() as _THREE.Vector3,
 		];
 		this._updateNearPlaneCorners();
+
+		this._deadzones = [];
 
 		// Target cannot move outside of this box
 		this._boundary = new THREE.Box3(
@@ -485,8 +489,22 @@ export class CameraControls extends EventDispatcher {
 
 				extractClientCoordFromEvent( event, _v2 );
 
-				const deltaX = lastDragPosition.x - _v2.x;
-				const deltaY = lastDragPosition.y - _v2.y;
+				let deltaX = lastDragPosition.x - _v2.x;
+				let deltaY = lastDragPosition.y - _v2.y;
+
+				this._deadzones.forEach( deadzone => {
+
+					if (
+						_v2.x > deadzone.min.x && _v2.x < deadzone.max.x &&
+						_v2.y > deadzone.min.y && _v2.y < deadzone.max.y
+					) {
+
+						deltaX = 0;
+						deltaY = 0;
+
+					}
+
+				} );
 
 				lastDragPosition.copy( _v2 );
 
@@ -988,6 +1006,12 @@ export class CameraControls extends EventDispatcher {
 			targetX, targetY, targetZ,
 			enableTransition,
 		);
+
+	}
+
+	setDraggingDeadzone( deadzones: {min: _THREE.Vector2, max: _THREE.Vector2}[] ) {
+
+		this._deadzones = deadzones;
 
 	}
 
