@@ -218,6 +218,7 @@
 	            new THREE.Vector3(),
 	        ];
 	        _this._updateNearPlaneCorners();
+	        _this._deadzones = [];
 	        _this._boundary = new THREE.Box3(new THREE.Vector3(-Infinity, -Infinity, -Infinity), new THREE.Vector3(Infinity, Infinity, Infinity));
 	        _this._target0 = _this._target.clone();
 	        _this._position0 = _this._camera.position.clone();
@@ -408,6 +409,13 @@
 	                extractClientCoordFromEvent(event, _v2);
 	                var deltaX = lastDragPosition_1.x - _v2.x;
 	                var deltaY = lastDragPosition_1.y - _v2.y;
+	                _this._deadzones.forEach(function (deadzone) {
+	                    if (_v2.x > deadzone.min.x && _v2.x < deadzone.max.x &&
+	                        _v2.y > deadzone.min.y && _v2.y < deadzone.max.y) {
+	                        deltaX = 0;
+	                        deltaY = 0;
+	                    }
+	                });
 	                lastDragPosition_1.copy(_v2);
 	                switch (_this._state) {
 	                    case ACTION.ROTATE:
@@ -748,6 +756,9 @@
 	        if (enableTransition === void 0) { enableTransition = false; }
 	        var pos = this.getPosition(_v3A);
 	        this.setLookAt(pos.x, pos.y, pos.z, targetX, targetY, targetZ, enableTransition);
+	    };
+	    CameraControls.prototype.setDraggingDeadzone = function (deadzones) {
+	        this._deadzones = deadzones;
 	    };
 	    CameraControls.prototype.setBoundary = function (box3) {
 	        if (!box3) {
