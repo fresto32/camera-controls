@@ -73,7 +73,7 @@ export declare class CameraControls extends EventDispatcher {
     lerpLookAt(positionAX: number, positionAY: number, positionAZ: number, targetAX: number, targetAY: number, targetAZ: number, positionBX: number, positionBY: number, positionBZ: number, targetBX: number, targetBY: number, targetBZ: number, t: number, enableTransition?: boolean): void;
     setPosition(positionX: number, positionY: number, positionZ: number, enableTransition?: boolean): void;
     setTarget(targetX: number, targetY: number, targetZ: number, enableTransition?: boolean): void;
-    setDraggingDeadzone(deadzones: {
+    setDraggingDeadzones(deadzones: {
         min: _THREE.Vector2;
         max: _THREE.Vector2;
     }[]): void;

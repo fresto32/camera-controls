@@ -757,7 +757,7 @@
 	        var pos = this.getPosition(_v3A);
 	        this.setLookAt(pos.x, pos.y, pos.z, targetX, targetY, targetZ, enableTransition);
 	    };
-	    CameraControls.prototype.setDraggingDeadzone = function (deadzones) {
+	    CameraControls.prototype.setDraggingDeadzones = function (deadzones) {
 	        this._deadzones = deadzones;
 	    };
 	    CameraControls.prototype.setBoundary = function (box3) {

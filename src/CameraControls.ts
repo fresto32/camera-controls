@@ -1009,7 +1009,7 @@ export class CameraControls extends EventDispatcher {
 
 	}
 
-	setDraggingDeadzone( deadzones: {min: _THREE.Vector2, max: _THREE.Vector2}[] ) {
+	setDraggingDeadzones( deadzones: {min: _THREE.Vector2, max: _THREE.Vector2}[] ) {
 
 		this._deadzones = deadzones;
 
