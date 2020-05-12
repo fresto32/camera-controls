@@ -4,6 +4,7 @@ import {
 	MouseButtons,
 	Touches,
 	FitToOptions,
+	DraggingDeadzone,
 } from './types';
 import {
 	PI_2,
@@ -20,6 +21,7 @@ import { isTouchEvent } from './utils/isTouchEvent';
 import { extractClientCoordFromEvent } from './utils/extractClientCoordFromEvent';
 import { notSupportedInOrthographicCamera } from './utils/notSupportedInOrthographicCamera';
 import { EventDispatcher } from './EventDispatcher';
+import { isInADraggingDeadzone } from 'utils/isInADraggingDeadzone';
 
 const isMac: boolean = /Mac/.test( navigator.platform );
 const readonlyACTION = Object.freeze( ACTION );
@@ -134,7 +136,7 @@ export class CameraControls extends EventDispatcher {
 	// collisionTest uses nearPlane. ( PerspectiveCamera only )
 	protected _nearPlaneCorners: _THREE.Vector3[];
 
-	protected _deadzones: {min: _THREE.Vector2, max: _THREE.Vector2}[];
+	protected _draggingDeadzones: DraggingDeadzone[];
 
 	protected _boundary: _THREE.Box3;
 	protected _boundaryEnclosesCamera = false;
@@ -176,7 +178,7 @@ export class CameraControls extends EventDispatcher {
 		];
 		this._updateNearPlaneCorners();
 
-		this._deadzones = [];
+		this._draggingDeadzones = [];
 
 		// Target cannot move outside of this box
 		this._boundary = new THREE.Box3(
@@ -442,7 +444,7 @@ export class CameraControls extends EventDispatcher {
 
 				event.preventDefault();
 
-				extractClientCoordFromEvent( event, _v2 );
+				extractClientCoordFromEvent( event, _v2, this._draggingDeadzones );
 
 				this._getClientRect( elementRect );
 				dragStartPosition.copy( _v2 );
@@ -458,14 +460,29 @@ export class CameraControls extends EventDispatcher {
 					const dx = _v2.x - touchEvent.touches[ 1 ].clientX;
 					const dy = _v2.y - touchEvent.touches[ 1 ].clientY;
 					const distance = Math.sqrt( dx * dx + dy * dy );
+					let isInDraggingDeadzone = false;
 
+					for ( let i = 0; i < touchEvent.touches.length; i ++ ) {
+
+						const x = touchEvent.touches[ i ].clientX;
+						const y = touchEvent.touches[ i ].clientY;
+						if ( isInADraggingDeadzone( x, y, this._draggingDeadzones ) ) {
+
+							isInDraggingDeadzone = true;
+							break;
+
+						}
+
+					}
+
+					if ( ! isInDraggingDeadzone ) dollyStart.set( 0, distance );
 					dollyStart.set( 0, distance );
 
 					// center coords of 2 finger truck
 					const x = ( touchEvent.touches[ 0 ].clientX + touchEvent.touches[ 1 ].clientX ) * 0.5;
 					const y = ( touchEvent.touches[ 0 ].clientY + touchEvent.touches[ 1 ].clientY ) * 0.5;
 
-					lastDragPosition.set( x, y );
+					if ( ! isInDraggingDeadzone ) lastDragPosition.set( x, y );
 
 				}
 
@@ -487,24 +504,10 @@ export class CameraControls extends EventDispatcher {
 
 				event.preventDefault();
 
-				extractClientCoordFromEvent( event, _v2 );
+				extractClientCoordFromEvent( event, _v2, this._draggingDeadzones );
 
-				let deltaX = lastDragPosition.x - _v2.x;
-				let deltaY = lastDragPosition.y - _v2.y;
-
-				this._deadzones.forEach( deadzone => {
-
-					if (
-						_v2.x > deadzone.min.x && _v2.x < deadzone.max.x &&
-						_v2.y > deadzone.min.y && _v2.y < deadzone.max.y
-					) {
-
-						deltaX = 0;
-						deltaY = 0;
-
-					}
-
-				} );
+				const deltaX = lastDragPosition.x - _v2.x;
+				const deltaY = lastDragPosition.y - _v2.y;
 
 				lastDragPosition.copy( _v2 );
 
@@ -1009,9 +1012,9 @@ export class CameraControls extends EventDispatcher {
 
 	}
 
-	setDraggingDeadzones( deadzones: {min: _THREE.Vector2, max: _THREE.Vector2}[] ) {
+	setDraggingDeadzones( draggingDeadzones: DraggingDeadzone[] ) {
 
-		this._deadzones = deadzones;
+		this._draggingDeadzones = draggingDeadzones;
 
 	}
 

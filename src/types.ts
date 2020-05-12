@@ -37,3 +37,8 @@ export interface FitToOptions {
 	paddingBottom: number;
 	paddingTop   : number;
 }
+
+export interface DraggingDeadzone {
+	min: THREE.Vector2;
+	max: THREE.Vector2;
+}

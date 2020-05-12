@@ -1,7 +1,13 @@
-import * as _THREE  from 'three/src/Three.d';
+import * as _THREE from 'three/src/Three.d';
 import { isTouchEvent } from './isTouchEvent';
+import { DraggingDeadzone } from '../types';
+import { isInADraggingDeadzone } from './isInADraggingDeadzone';
 
-export function extractClientCoordFromEvent( event: Event, out: _THREE.Vector2 ) {
+export function extractClientCoordFromEvent(
+	event: Event,
+	out: _THREE.Vector2,
+	deadzones: DraggingDeadzone[]
+) {
 
 	out.set( 0, 0 );
 
@@ -9,15 +15,39 @@ export function extractClientCoordFromEvent( event: Event, out: _THREE.Vector2 )
 
 		const touchEvent = event as TouchEvent;
 
+		let numInDeadzones = 0;
+
 		for ( let i = 0; i < touchEvent.touches.length; i ++ ) {
 
-			out.x += touchEvent.touches[ i ].clientX;
-			out.y += touchEvent.touches[ i ].clientY;
+			const x = touchEvent.touches[ i ].clientX;
+			const y = touchEvent.touches[ i ].clientY;
+
+			if ( ! isInADraggingDeadzone( x, y, deadzones ) ) {
+
+				out.x += touchEvent.touches[ i ].clientX;
+				out.y += touchEvent.touches[ i ].clientY;
+
+			} else {
+
+				numInDeadzones ++;
+
+			}
 
 		}
 
-		out.x /= touchEvent.touches.length;
-		out.y /= touchEvent.touches.length;
+		const validTouchEvents = touchEvent.touches.length - numInDeadzones;
+
+		if ( validTouchEvents > 0 ) {
+
+			out.x /= touchEvent.touches.length - numInDeadzones;
+			out.y /= touchEvent.touches.length - numInDeadzones;
+
+		} else {
+
+			out.x = 0;
+			out.y = 0;
+
+		}
 
 		return out;
 
