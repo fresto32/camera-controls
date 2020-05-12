@@ -76,16 +76,43 @@ function isTouchEvent(event) {
     return 'TouchEvent' in window && event instanceof TouchEvent;
 }
 
-function extractClientCoordFromEvent(event, out) {
+function isInADraggingDeadzone(x, y, deadzones) {
+    return deadzones.some(function (deadzone) {
+        if (x > deadzone.min.x &&
+            x < deadzone.max.x &&
+            y > deadzone.min.y &&
+            y < deadzone.max.y) {
+            return true;
+        }
+        return false;
+    });
+}
+
+function extractClientCoordFromEvent(event, out, deadzones) {
     out.set(0, 0);
     if (isTouchEvent(event)) {
         var touchEvent = event;
+        var numInDeadzones = 0;
         for (var i = 0; i < touchEvent.touches.length; i++) {
-            out.x += touchEvent.touches[i].clientX;
-            out.y += touchEvent.touches[i].clientY;
+            var x = touchEvent.touches[i].clientX;
+            var y = touchEvent.touches[i].clientY;
+            if (!isInADraggingDeadzone(x, y, deadzones)) {
+                out.x += touchEvent.touches[i].clientX;
+                out.y += touchEvent.touches[i].clientY;
+            }
+            else {
+                numInDeadzones++;
+            }
         }
-        out.x /= touchEvent.touches.length;
-        out.y /= touchEvent.touches.length;
+        var validTouchEvents = touchEvent.touches.length - numInDeadzones;
+        if (validTouchEvents > 0) {
+            out.x /= touchEvent.touches.length - numInDeadzones;
+            out.y /= touchEvent.touches.length - numInDeadzones;
+        }
+        else {
+            out.x = 0;
+            out.y = 0;
+        }
         return out;
     }
     else {
@@ -212,7 +239,7 @@ var CameraControls = (function (_super) {
             new THREE.Vector3(),
         ];
         _this._updateNearPlaneCorners();
-        _this._deadzones = [];
+        _this._draggingDeadzones = [];
         _this._boundary = new THREE.Box3(new THREE.Vector3(-Infinity, -Infinity, -Infinity), new THREE.Vector3(Infinity, Infinity, Infinity));
         _this._target0 = _this._target.clone();
         _this._position0 = _this._camera.position.clone();
@@ -372,7 +399,7 @@ var CameraControls = (function (_super) {
                 if (!_this.enabled)
                     return;
                 event.preventDefault();
-                extractClientCoordFromEvent(event, _v2);
+                extractClientCoordFromEvent(event, _v2, _this._draggingDeadzones);
                 _this._getClientRect(elementRect_1);
                 dragStartPosition_1.copy(_v2);
                 lastDragPosition_1.copy(_v2);
@@ -382,10 +409,22 @@ var CameraControls = (function (_super) {
                     var dx = _v2.x - touchEvent.touches[1].clientX;
                     var dy = _v2.y - touchEvent.touches[1].clientY;
                     var distance = Math.sqrt(dx * dx + dy * dy);
+                    var isInDraggingDeadzone = false;
+                    for (var i = 0; i < touchEvent.touches.length; i++) {
+                        var x_1 = touchEvent.touches[i].clientX;
+                        var y_1 = touchEvent.touches[i].clientY;
+                        if (isInADraggingDeadzone(x_1, y_1, _this._draggingDeadzones)) {
+                            isInDraggingDeadzone = true;
+                            break;
+                        }
+                    }
+                    if (!isInDraggingDeadzone)
+                        dollyStart_1.set(0, distance);
                     dollyStart_1.set(0, distance);
                     var x = (touchEvent.touches[0].clientX + touchEvent.touches[1].clientX) * 0.5;
                     var y = (touchEvent.touches[0].clientY + touchEvent.touches[1].clientY) * 0.5;
-                    lastDragPosition_1.set(x, y);
+                    if (!isInDraggingDeadzone)
+                        lastDragPosition_1.set(x, y);
                 }
                 document.addEventListener('mousemove', dragging_1);
                 document.addEventListener('touchmove', dragging_1, { passive: false });
@@ -400,16 +439,9 @@ var CameraControls = (function (_super) {
                 if (!_this.enabled)
                     return;
                 event.preventDefault();
-                extractClientCoordFromEvent(event, _v2);
+                extractClientCoordFromEvent(event, _v2, _this._draggingDeadzones);
                 var deltaX = lastDragPosition_1.x - _v2.x;
                 var deltaY = lastDragPosition_1.y - _v2.y;
-                _this._deadzones.forEach(function (deadzone) {
-                    if (_v2.x > deadzone.min.x && _v2.x < deadzone.max.x &&
-                        _v2.y > deadzone.min.y && _v2.y < deadzone.max.y) {
-                        deltaX = 0;
-                        deltaY = 0;
-                    }
-                });
                 lastDragPosition_1.copy(_v2);
                 switch (_this._state) {
                     case ACTION.ROTATE:
@@ -751,8 +783,8 @@ var CameraControls = (function (_super) {
         var pos = this.getPosition(_v3A);
         this.setLookAt(pos.x, pos.y, pos.z, targetX, targetY, targetZ, enableTransition);
     };
-    CameraControls.prototype.setDraggingDeadzones = function (deadzones) {
-        this._deadzones = deadzones;
+    CameraControls.prototype.setDraggingDeadzones = function (draggingDeadzones) {
+        this._draggingDeadzones = draggingDeadzones;
     };
     CameraControls.prototype.setBoundary = function (box3) {
         if (!box3) {
