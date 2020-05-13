@@ -6,7 +6,8 @@ import { isInADraggingDeadzone } from './isInADraggingDeadzone';
 export function extractClientCoordFromEvent(
 	event: Event,
 	out: _THREE.Vector2,
-	deadzones: DraggingDeadzone[]
+	deadzones: DraggingDeadzone[],
+	lastPosition: _THREE.Vector2
 ) {
 
 	out.set( 0, 0 );
@@ -44,8 +45,7 @@ export function extractClientCoordFromEvent(
 
 		} else {
 
-			out.x = 0;
-			out.y = 0;
+			out.copy( lastPosition );
 
 		}
 

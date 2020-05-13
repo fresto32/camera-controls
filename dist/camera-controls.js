@@ -94,7 +94,7 @@
 	    });
 	}
 
-	function extractClientCoordFromEvent(event, out, deadzones) {
+	function extractClientCoordFromEvent(event, out, deadzones, lastPosition) {
 	    out.set(0, 0);
 	    if (isTouchEvent(event)) {
 	        var touchEvent = event;
@@ -116,8 +116,7 @@
 	            out.y /= touchEvent.touches.length - numInDeadzones;
 	        }
 	        else {
-	            out.x = 0;
-	            out.y = 0;
+	            out.copy(lastPosition);
 	        }
 	        return out;
 	    }
@@ -405,7 +404,7 @@
 	                if (!_this.enabled)
 	                    return;
 	                event.preventDefault();
-	                extractClientCoordFromEvent(event, _v2, _this._draggingDeadzones);
+	                extractClientCoordFromEvent(event, _v2, _this._draggingDeadzones, lastDragPosition_1);
 	                _this._getClientRect(elementRect_1);
 	                dragStartPosition_1.copy(_v2);
 	                lastDragPosition_1.copy(_v2);
@@ -445,7 +444,7 @@
 	                if (!_this.enabled)
 	                    return;
 	                event.preventDefault();
-	                extractClientCoordFromEvent(event, _v2, _this._draggingDeadzones);
+	                extractClientCoordFromEvent(event, _v2, _this._draggingDeadzones, lastDragPosition_1);
 	                var deltaX = lastDragPosition_1.x - _v2.x;
 	                var deltaY = lastDragPosition_1.y - _v2.y;
 	                lastDragPosition_1.copy(_v2);

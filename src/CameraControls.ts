@@ -444,7 +444,7 @@ export class CameraControls extends EventDispatcher {
 
 				event.preventDefault();
 
-				extractClientCoordFromEvent( event, _v2, this._draggingDeadzones );
+				extractClientCoordFromEvent( event, _v2, this._draggingDeadzones, lastDragPosition );
 
 				this._getClientRect( elementRect );
 				dragStartPosition.copy( _v2 );
@@ -504,7 +504,7 @@ export class CameraControls extends EventDispatcher {
 
 				event.preventDefault();
 
-				extractClientCoordFromEvent( event, _v2, this._draggingDeadzones );
+				extractClientCoordFromEvent( event, _v2, this._draggingDeadzones, lastDragPosition );
 
 				const deltaX = lastDragPosition.x - _v2.x;
 				const deltaY = lastDragPosition.y - _v2.y;
